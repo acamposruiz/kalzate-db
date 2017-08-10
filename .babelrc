@@ -1,4 +1,4 @@
 // .babelrc
 {
-  "presets": ["latest"]
+  "presets": ["latest", "stage-0"]
 }
