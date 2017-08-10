@@ -6,6 +6,7 @@ export default {
   properties: {
     reference: {
       type: 'string',
+      primary: true,
     },
     brand: {
       type: 'string',
@@ -90,5 +91,5 @@ export default {
       default: 0,
     },
   },
-  required: ['reference', 'price'],
+  required: ['price'],
 };

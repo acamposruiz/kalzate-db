@@ -1,8 +1,8 @@
 import * as RxDB from 'rxdb';
-import Items from 'models/items/rxdb';
-import Tickets from 'models/tickets/rxdb';
-import Browse from 'models/browse/rxdb';
-import Settings from 'models/settings/rxdb';
+import Items from 'models/items';
+import Tickets from 'models/tickets';
+import Browse from 'models/browse';
+import Settings from 'models/settings';
 
 const defaultOptions = {
   name: 'kalzatedb',

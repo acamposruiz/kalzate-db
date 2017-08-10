@@ -1,7 +1,7 @@
 /**
  * Public API
 */
-import RxDB from 'client/rxdb';
+import RxDB from 'client';
 
 const ClientFactory = async (...options) => RxDB(...options);
 
