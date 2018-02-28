@@ -1,21 +1,26 @@
 import * as RxDB from 'rxdb';
-import Items from 'models/items';
+import Stock from 'models/stock';
 import Tickets from 'models/tickets';
-import Browse from 'models/browse';
 import Settings from 'models/settings';
+import PouchdbAdapterIdb from 'pouchdb-adapter-idb';
+import PouchdbAdapterWebSQL from 'pouchdb-adapter-websql';
+import PouchdbAdapterLocalstorage from 'pouchdb-adapter-localstorage';
+
+RxDB.plugin(PouchdbAdapterIdb);
+// RxDB.plugin(PouchdbAdapterWebSQL);
+// RxDB.plugin(PouchdbAdapterLocalstorage);
 
 const defaultOptions = {
   name: 'kalzatedb',
-  adapter: 'websql',
+  adapter: 'idb',
   multiInstance: true,
 };
 
 export default async function (dbOptions) {
   const options = { ...defaultOptions, ...dbOptions };
   const db = await RxDB.create(options);
-  const items = await Items(db);
+  const stock = await Stock(db);
   const tickets = await Tickets(db);
-  const browse = await Browse(db);
   const settings = await Settings(db);
-  return { items, tickets, browse, settings };
+  return { stock, tickets, settings };
 }

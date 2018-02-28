@@ -18,7 +18,9 @@
     "validate": "npm-run-all --parallel lint test build",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "author": "Zuri Pabon <zurisadai.pabon@gmail.com> (http://zuri.website/)",
   "license": "MIT",
   "dependencies": {},
@@ -46,9 +48,12 @@
     "jest-cli": "^20.0.4",
     "json-loader": "0.5.4",
     "npm-run-all": "4.0.2",
+    "pouchdb-adapter-idb": "^6.4.3",
+    "pouchdb-adapter-localstorage": "^6.4.3",
     "pouchdb-adapter-memory": "^6.2.0",
-    "rimraf": "2.6.1",
-    "rxdb": "^5.2.1",
+    "pouchdb-adapter-websql": "^6.4.3",
+    "rimraf": "^2.6.1",
+    "rxdb": "^7.3.3",
     "rxjs": "^5.4.1",
     "semantic-release": "^6.3.6",
     "validate-commit-msg": "2.12.1",
