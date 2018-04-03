@@ -5,7 +5,7 @@ import schema from 'models/settings/schema';
 
 class Settings {
 
-  defaults = [{ key: 'country', value: 'spain' }];
+  defaults = [];
 
   constructor(db, collection) {
     if (!isRxDatabase(db)) {
@@ -17,9 +17,9 @@ class Settings {
     this.db = db;
     this.collection = collection;
   }
-  async init() {
+  async init(defaultTo = this.defaults) {
     const settingsFound = await this.collection.find().exec();
-    return size(settingsFound) ? settingsFound : fromPairs(map(this.defaults, ({ key, value }) => [key, value]));
+    return fromPairs(map(size(settingsFound) ? settingsFound : defaultTo, ({ key, value }) => [key, value]));
   }
 }
 

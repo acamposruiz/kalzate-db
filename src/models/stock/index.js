@@ -25,7 +25,7 @@ class Stock {
   //     BY_CHILDREN: { where: 'category == "children"' },
   //     ALL: {},
   //   };
-  defaults = [];
+  defaults = { limit: DEFAULT_LIMIT_AMOUNT, skip: 0 };
 
   constructor(db, collection) {
     if (!isRxDatabase(db)) {
@@ -37,25 +37,30 @@ class Stock {
     this.db = db;
     this.collection = collection;
   }
-  async init() {
-    const stockFound = await this.collection.find().exec();
-    return size(stockFound) ? stockfound : this.defaults;
+
+  async init(limit = this.defaults.limit, skip = this.defaults.skip) {
+    const [items, total] = await this.find({ count: true, sort: { 'created_at': 'desc' }, limit, skip });
+    return { items, total, limit, skip };
   }
-  async create(stock) {
-    return isArray(stock)
-      ? this.collection.pouch.bulkDocs(stock)
-      : this.collection.insert(stock);
-  }
+
+  // async create(stock) {
+  //   return isArray(stock)
+  //     ? this.collection.pouch.bulkDocs(stock)
+  //     : this.collection.insert(stock);
+  // }
   async upsert(stock) {
-    return this.collection.atomicUpsert(stock);
+    stock.created_at = (new Date()).getTime();
+    return await this.collection.atomicUpsert(stock);
   }
+
   async find(
-    { match, limit = DEFAULT_LIMIT_AMOUNT, skip = 0, count = false } = {}
+    { match, limit = DEFAULT_LIMIT_AMOUNT, skip = 0, count = false, sort = { 'created_at': 'desc' } } = {}
   ) {
     const foundStocks = this.collection
       .find(match)
       .limit(limit)
       .skip(skip)
+      .sort(sort)
       .exec();
     if (!count) return foundStocks;
     const totalAmount = new Promise(async (resolve) => {
@@ -64,8 +69,11 @@ class Stock {
     });
     return Promise.all([foundStocks, totalAmount]);
   }
+
   //   async update(id, Stock) {}
-  //   async remove(id) {}
+  async remove(reference) {
+    return await this.collection.findOne({ reference: { $eq: reference } }).remove();
+  }
   // async query({ select, where, limit, offset, order }) {
   //   return this.collection.find()
   // }
@@ -80,13 +88,13 @@ class Stock {
   //   offset += limit;
   // }
   //   }
-  async import(json) {
-    return this.collection.importDump(json);
-  }
+  // async import(json) {
+  //   return this.collection.importDump(json);
+  // }
 
-  async export() {
-    return this.collection.dump();
-  }
+  // async export() {
+  //   return this.collection.dump();
+  // }
 
 }
 
