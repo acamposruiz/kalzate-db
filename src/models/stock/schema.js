@@ -6,11 +6,17 @@ export default {
   properties: {
     created_at: {
       type: 'number',
-      index: true
+      index: true,
+    },
+    id: {
+      type: 'string',
+      primary: true,
+      final: true,
     },
     reference: {
       type: 'string',
-      primary: true,
+      index: true,
+      final: true,
     },
     brand: {
       type: 'string',
@@ -28,11 +34,11 @@ export default {
       type: 'string',
     },
     colors: {
-      type: "array",
+      type: 'array',
       uniqueItems: true,
       item: {
-        type: "string",
-      }
-    }
-  }
+        type: 'string',
+      },
+    },
+  },
 };
