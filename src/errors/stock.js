@@ -1,5 +1,5 @@
 /**
- * @class NoRxdNoStockCreatedErrorbFound
+ * @class NoStockCreatedError
  * @desc throws when stock cannot be created
  */
 export class NoStockCreatedError extends Error {
@@ -7,9 +7,27 @@ export class NoStockCreatedError extends Error {
     super(e);
     this.title = 'Stock could not be created';
     this.code = 'NoStockCreatedError';
-    this.params = stock;
+    this.data = stock;
     this.message = `Stock ${JSON.stringify(
       stock
     )} could not be created. Please, check extra info: ${e.message}`;
+  }
+}
+
+/**
+ * @class NoStockUpdatedError
+ * @desc throws when stock cannot be updated
+ */
+export class NoStockUpdatedError extends Error {
+  constructor(e = { message: '' }, stock = {}) {
+    super(e);
+    this.title = 'Stock could not be updated';
+    this.code = 'NoStockUpdatedError';
+    this.data = stock;
+    this.message = `Stock ${JSON.stringify(
+      stock
+    )} could not be updated. To update an stock, it has to exist and fit the stock schema. Have a look a it on src/models/stock/schema.js. Please, check extra info: ${
+      e.message
+    }`;
   }
 }

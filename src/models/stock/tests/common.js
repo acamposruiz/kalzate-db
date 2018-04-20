@@ -4,9 +4,17 @@ import Stock from 'models/stock';
 
 plugin(MemoryAdapter);
 
+export const counter = (function* counter() {
+  let countId = 0;
+  while (true) {
+    countId += 1;
+    yield countId;
+  }
+}());
+
 export const getStockInstance = async (
   dbOptions = {
-    name: 'kalzatedb',
+    name: `kalzatedb${new Date().getTime()}`,
     adapter: 'memory',
     multiInstance: true,
   }
@@ -14,11 +22,12 @@ export const getStockInstance = async (
 
 export const isErrorInstanceOf = async (fn, ErrorType) => {
   let error = {};
+  let data;
   try {
-    await fn();
+    data = await fn();
   } catch (e) {
     error = e;
   }
   const { title, code } = new ErrorType();
-  return { result: error.title === title && error.code === code, error };
+  return { data, result: error.title === title && error.code === code, error };
 };

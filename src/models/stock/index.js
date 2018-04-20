@@ -10,15 +10,15 @@
 // Cat Men
 // Cat Children
 // All
-import { isRxCollection, isRxDatabase, RxQuery } from 'rxdb';
-import { isArray, size } from 'lodash';
+import { isRxCollection, isRxDatabase } from 'rxdb';
+import { isArray, merge, uniqBy } from 'lodash';
 import uuidv1 from 'uuid/v1';
 import schema from 'models/stock/schema';
 import { DEFAULT_LIMIT_AMOUNT } from 'models/stock/config';
 import { NoDatabaseFoundError } from 'errors/db';
-import { NoStockCreatedError } from 'errors/stock';
+import { NoStockCreatedError, NoStockUpdatedError } from 'errors/stock';
 export class Stock {
-  //   static QUERIES = {
+  //   static queries = {
   //     MORE_SOLD: { order: 'times_sold', desc: true },
   //     MORE_EXPENSIVE: {},
   //     LAST_SOLD: { order: 'last_sold_date', desc: true },
@@ -40,40 +40,50 @@ export class Stock {
     this.collection = collection;
   }
 
-  // async create(stock) {
-  //   return isArray(stock)
-  //     ? this.collection.pouch.bulkDocs(stock)
-  //     : this.collection.insert(stock);
-  // }
-
-  async createBatch(stock, options) {
-    return this.collection.importDump(stock);
-  }
-
-  async create(stock = {}, options = {}) {
+  /**
+   * @method create
+   * Cretes a new stock document
+   * @param {array|object} stock/s item/s
+   * @param {object} options
+   */
+  async create(stock, options) {
     try {
-      // if (options.batch === true) {
-      //   return this.createBatch(stock, options);
-      // }
-      if (!stock || !stock.reference || !stock.price || stock.price <= 0) {
-        throw new Error('Stock requires reference and price');
-      }
-      const isStockCreated = await this.collection
-        .find({ reference: { $eq: stock.reference } })
-        .exec();
-      if (isStockCreated.length) throw new Error('Stock already exists');
-      stock.id = uuidv1();
-      stock.created_at = new Date().getTime();
-      return await this.upsert(stock);
+      return await (isArray(stock)
+        ? this.createBatch(stock, options)
+        : this.createOne(stock, options));
     } catch (e) {
       throw new NoStockCreatedError(e, stock);
     }
   }
 
-  async upsert(stock) {
-    return this.collection.atomicUpsert(stock);
+  /**
+   * @method update
+   * This updates an stock item. it has to exists and fit the schema
+   * @param {object} stock
+   */
+  async update(stock = {}) {
+    try {
+      if (!stock || !stock.id) {
+        throw new Error('Stock requires an id field to be updated');
+      }
+      // Remove find check to allow creating a new stock if it does not exist
+      const isStockCreated = await this.collection
+        .find({ id: { $eq: stock.id } })
+        .exec();
+      if (!isStockCreated.length) {
+        throw new Error('Stock to be updated does not exists');
+      }
+      return await this.upsert(stock);
+    } catch (e) {
+      throw new NoStockUpdatedError(e, stock);
+    }
   }
 
+  /**
+   * @method get
+   * This fetches the stock items given a filter
+   * @param {object} {match, limit, skip, count, sort}
+   */
   async get({
     match,
     limit = this.defaults.limit,
@@ -96,12 +106,21 @@ export class Stock {
     return { items, total, limit, skip };
   }
 
-  //   async update(id, Stock) {}
+  /**
+   * @method remove
+   * This removes an item by reference
+   * @param {string} reference
+   */
   async remove(reference) {
     return this.collection.findOne({ reference: { $eq: reference } }).remove();
   }
 
-  async export(decrypt = true) {
+  /**
+   * @method dump
+   * This is a method to export the collection as JSON data
+   * @param {boolean} decrypt
+   */
+  async dump(decrypt = true) {
     return this.collection.dump(decrypt);
   }
   // async query({ select, where, limit, offset, order }) {
@@ -122,9 +141,49 @@ export class Stock {
   //   return this.collection.importDump(json);
   // }
 
-  // async export() {
-  //   return this.collection.dump();
-  // }
+  /** ***************************************************** */
+  /*                  PRIVATE METHODS                      */
+  /** ***************************************************** */
+
+  async createBatch(stock = []) {
+    if (!stock.length) {
+      throw new Error('stock items is empty');
+    }
+    // this.collection.pouch.bulkDocs
+    // this.collection.pouch.allDocs
+    const createOnePromises = uniqBy(stock, 'reference').map((s) =>
+      this.createOne(s, true)
+    );
+    return Promise.all(createOnePromises);
+  }
+
+  async createOne(stock = {}, orUpdate = false) {
+    if (!stock || !stock.reference || !stock.price || stock.price <= 0) {
+      throw new Error('Stock requires reference and price');
+    }
+    const isStockCreated = await this.collection
+      .find({ reference: { $eq: stock.reference } })
+      .exec();
+    if (!isStockCreated.length) {
+      return this.upsert(
+        merge(stock, { id: uuidv1(), created_at: new Date().getTime() })
+      );
+    }
+    if (!orUpdate) {
+      throw new Error('Stock already exists');
+    }
+    return this.upsert(
+      merge(stock, {
+        id: isStockCreated[0].id,
+        created_at: isStockCreated[0].created_at,
+        amount: (isStockCreated[0].amount || 0) + (stock.amount || 0),
+      })
+    );
+  }
+
+  async upsert(stock) {
+    return this.collection.atomicUpsert(stock);
+  }
 }
 
 export default async function (db) {

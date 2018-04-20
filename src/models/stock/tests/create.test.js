@@ -81,6 +81,22 @@ describe.only('create stock method', function() {
     expect(case4.result).to.be.true;
   });
 
+  it('should throw error if no reference is given when creating an item', async () => {
+    const case1 = await isErrorInstanceOf(
+      async () =>
+        await stockInstance.create({
+          brand: 'brand',
+          gender: 'man',
+          size: 1,
+          price: 1,
+          amount: 2,
+          colors: ['white'],
+        }),
+      NoStockCreatedError
+    );
+    expect(case1.result).to.be.true;
+  });
+
   it('should throw error if no price is given when creating an item', async () => {
     const case1 = await isErrorInstanceOf(
       async () =>
@@ -100,6 +116,19 @@ describe.only('create stock method', function() {
       NoStockCreatedError
     );
     expect(case2.result).to.be.true;
+    const case3 = await isErrorInstanceOf(
+      async () =>
+        await stockInstance.create({
+          reference: '3',
+          brand: 'brand',
+          gender: 'man',
+          size: 1,
+          amount: 2,
+          colors: ['white'],
+        }),
+      NoStockCreatedError
+    );
+    expect(case3.result).to.be.true;
   });
 
   it('should create an item using a reference and a price', async function() {
@@ -112,5 +141,9 @@ describe.only('create stock method', function() {
       NoStockCreatedError
     );
     expect(case1.result).to.be.false;
+    expect(case1.data).to.have.property('id');
+    expect(case1.data).to.have.property('created_at');
+    expect(case1.data).to.have.property('reference');
+    expect(case1.data).to.have.property('price');
   });
 });
