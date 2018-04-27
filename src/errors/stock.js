@@ -31,3 +31,19 @@ export class NoStockUpdatedError extends Error {
     }`;
   }
 }
+
+/**
+ * @class NoStockMatchesFoundError
+ * @desc throws when no matches are found
+ */
+export class NoStockMatchesFoundError extends Error {
+  constructor(e = { message: '' }, field = '', value = '') {
+    super(e);
+    this.title = 'Stock matches not found';
+    this.code = 'NoStockMatchesFoundError';
+    this.data = { field, value };
+    this.message = `No matches found for field "${field}" with value ${value}.Please, check extra info: ${
+      e.message
+    }`;
+  }
+}

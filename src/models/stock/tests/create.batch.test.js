@@ -167,4 +167,41 @@ describe.only('create batch stock method', function() {
     const stockItems = await stockInstance.get();
     expect(stockItems.total).to.equal(2);
   });
+  it('should remove current stock if remove option is set to true', async () => {
+    const case1 = await isErrorInstanceOf(
+      async () =>
+        await stockInstance.create([
+          {
+            reference: 'reference1',
+            price: 1,
+          },
+          {
+            reference: 'reference2',
+            price: 1,
+          },
+        ]),
+      NoStockCreatedError
+    );
+    expect(case1.result).to.be.false;
+
+    let stockItems = await stockInstance.get();
+    expect(stockItems.total).to.equal(2);
+    const case2 = await isErrorInstanceOf(
+      async () =>
+        await stockInstance.create(
+          [
+            {
+              reference: 'reference1',
+              price: 2,
+            },
+          ],
+          { remove: true }
+        ),
+      NoStockCreatedError
+    );
+    expect(case2.result).to.be.false;
+    stockItems = await stockInstance.get();
+    expect(stockItems.total).to.equal(1);
+    expect(stockItems.items[0].price).to.equal(2);
+  });
 });

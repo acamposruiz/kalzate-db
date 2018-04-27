@@ -16,7 +16,11 @@ import uuidv1 from 'uuid/v1';
 import schema from 'models/stock/schema';
 import { DEFAULT_LIMIT_AMOUNT } from 'models/stock/config';
 import { NoDatabaseFoundError } from 'errors/db';
-import { NoStockCreatedError, NoStockUpdatedError } from 'errors/stock';
+import {
+  NoStockCreatedError,
+  NoStockUpdatedError,
+  NoStockMatchesFoundError,
+} from 'errors/stock';
 export class Stock {
   //   static queries = {
   //     MORE_SOLD: { order: 'times_sold', desc: true },
@@ -107,12 +111,44 @@ export class Stock {
   }
 
   /**
+   * @method matches
+   * This looks for a all stock items maching the field and value given
+   * @param {string} field
+   * @param {string} value
+   */
+  async matches(field, value) {
+    try {
+      if (!value) return { value, items: [] };
+      const matches = await this.get({
+        match: { [field]: { $regex: new RegExp(`^${value}`) } },
+      });
+      // return { ...matches, value, items: matches.items.map((i) => i[field]) };
+      return { value, items: matches.items.map((i) => i[field]) };
+    } catch (e) {
+      throw new NoStockMatchesFoundError(e, field, value);
+    }
+  }
+
+  /**
    * @method remove
    * This removes an item by reference
    * @param {string} reference
    */
   async remove(reference) {
     return this.collection.findOne({ reference: { $eq: reference } }).remove();
+  }
+
+  /**
+   * @method remove
+   * This removes an item by reference
+   * @param {string} reference
+   */
+  async removeAll() {
+    await this.collection.remove();
+    this.collection = await this.db.collection({
+      name: 'stock',
+      schema,
+    });
   }
 
   /**
@@ -145,15 +181,20 @@ export class Stock {
   /*                  PRIVATE METHODS                      */
   /** ***************************************************** */
 
-  async createBatch(stock = []) {
+  async createBatch(stock = [], options = {}) {
     if (!stock.length) {
       throw new Error('stock items is empty');
+    }
+
+    if (options.remove) {
+      await this.removeAll();
     }
     // this.collection.pouch.bulkDocs
     // this.collection.pouch.allDocs
     const createOnePromises = uniqBy(stock, 'reference').map((s) =>
       this.createOne(s, true)
     );
+    // const createOnePromises = stock.map((s) => this.createOne(s, true));
     return Promise.all(createOnePromises);
   }
 
