@@ -4,33 +4,50 @@ export default {
   description: 'describes the tickets',
   type: 'object',
   properties: {
+    created_at: {
+      type: 'number',
+      index: true,
+    },
     id: {
       type: 'string',
-      "primary": true
+      primary: true,
+      final: true,
     },
-    status: {
+    state: {
       type: 'string',
     },
     items: {
       type: 'array',
     },
-    total: {
+    // total: {
+    //   type: 'number',
+    // },
+    // totalIn: {
+    //   type: 'number',
+    // },
+    // totalOut: {
+    //   type: 'number',
+    // },
+    totalAmount: {
+      type: 'string',
+    },
+    givenAmount: {
+      type: 'string',
+    },
+    returnAmount: {
+      type: 'string',
+    },
+    discount: {
       type: 'number',
     },
-    total_in: {
-      type: 'number',
-    },
-    total_out: {
+    tax: {
       type: 'number',
     },
     currency: {
       type: 'string',
     },
-    paymentMethod: {
+    method: {
       type: 'string',
     },
-    date: {
-      type: 'string',
-    }
-  }
+  },
 };

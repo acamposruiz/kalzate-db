@@ -30,13 +30,17 @@
 // Cat Men
 // Cat Children
 // All
-import { isRxCollection, isRxDatabase, RxQuery } from 'rxdb';
-import { isArray, size } from 'lodash';
+import { isRxCollection, isRxDatabase } from 'rxdb';
+import { merge } from 'lodash';
 import schema from 'models/tickets/schema';
+import uuidv1 from 'uuid/v1';
+import { DEFAULT_LIMIT_AMOUNT } from 'models/tickets/config';
+import {
+  TicketNoSavedError,
+} from 'errors/tickets';
 
 class Tickets {
-
-  defaults = [];
+  defaults = { limit: DEFAULT_LIMIT_AMOUNT, skip: 0 };
 
   constructor(db, collection) {
     if (!isRxDatabase(db)) {
@@ -48,9 +52,70 @@ class Tickets {
     this.db = db;
     this.collection = collection;
   }
-  async init() {
-    const ticketsFound = await this.collection.find().exec();
-    return size(ticketsFound) ? ticketsFound : this.defaults;
+
+  /**
+   * @method save
+   * Saves a new ticket document
+   * @param {array|object} ticket/s item/s
+   * @param {string} state
+   */
+  async save(ticket, state) {
+    try {
+      return await this.createOne(ticket, state);
+    } catch (e) {
+      throw new TicketNoSavedError(e, ticket);
+    }
+  }
+
+  /**
+   * @method get
+   * This fetches the ticket items given a filter
+   * @param {object} {match, limit, skip, count, sort}
+   */
+  async get({
+    match,
+    limit = this.defaults.limit,
+    skip = this.defaults.skip,
+    count = true,
+    sort = { created_at: 'desc' },
+  } = {}) {
+    const foundTickets = this.collection
+      .find(match)
+      .limit(limit)
+      .skip(skip)
+      .sort(sort)
+      .exec();
+    if (!count) return foundTickets;
+    const totalAmount = new Promise(async (resolve) => {
+      const allTickets = await this.collection.find(match).exec();
+      resolve(allTickets.length);
+    });
+    const [items, total] = await Promise.all([foundTickets, totalAmount]);
+    return { items, total, limit, skip };
+  }
+
+  /** ***************************************************** */
+  /*                  PRIVATE METHODS                      */
+  /** ***************************************************** */
+
+  /**
+   * @method createOne
+   * Cretes a new ticket document in db
+   * @param {array|object} ticket/s item/s
+   * @param {string} state
+   */
+  async createOne(ticket, state) {
+    try {
+      return this.upsert(
+        merge({ items: ticket.items }, ticket.payment, {
+          state,
+          id: uuidv1(),
+          created_at: new Date().getTime(),
+        })
+      );
+    } catch (e) {
+      throw new Error('createOne function');
+    }
   }
 }
 
