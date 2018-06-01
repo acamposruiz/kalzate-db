@@ -31,16 +31,29 @@
 // Cat Children
 // All
 import { isRxCollection, isRxDatabase } from 'rxdb';
-import { merge } from 'lodash';
 import schema from 'models/tickets/schema';
 import uuidv1 from 'uuid/v1';
+import { isEmpty } from 'lodash';
 import { DEFAULT_LIMIT_AMOUNT } from 'models/tickets/config';
 import {
   TicketNoSavedError,
+  TicketsNotFoundError,
 } from 'errors/tickets';
 
 class Tickets {
   defaults = { limit: DEFAULT_LIMIT_AMOUNT, skip: 0 };
+  queries = {
+    dailyTickets: (limit, skip) => ({
+      match: {
+        created_at: {
+          $gte: (new Date()).setHours(0, 0, 0, 0),
+        },
+      },
+      sort: 'created_at',
+      limit,
+      skip,
+    }),
+  }
 
   constructor(db, collection) {
     if (!isRxDatabase(db)) {
@@ -57,13 +70,29 @@ class Tickets {
    * @method save
    * Saves a new ticket document
    * @param {array|object} ticket/s item/s
-   * @param {string} state
    */
-  async save(ticket, state) {
+  async save(ticket) {
     try {
-      return await this.createOne(ticket, state);
+      const validationError = this.validateTicket(ticket);
+      if (validationError) {
+        throw new Error(validationError);
+      }
+      return await this.createOne(ticket);
     } catch (e) {
       throw new TicketNoSavedError(e, ticket);
+    }
+  }
+
+  /**
+   * @method query
+   * Get the list of tickets filtered by a given query
+   * @param {object} tickets query
+   */
+  async query(query = this.queries.dailyTickets()) {
+    try {
+      return await this.get(query);
+    } catch (e) {
+      throw new TicketsNotFoundError(e);
     }
   }
 
@@ -77,7 +106,7 @@ class Tickets {
     limit = this.defaults.limit,
     skip = this.defaults.skip,
     count = true,
-    sort = { created_at: 'desc' },
+    sort = { created_at: 'asc' },
   } = {}) {
     const foundTickets = this.collection
       .find(match)
@@ -104,18 +133,21 @@ class Tickets {
    * @param {array|object} ticket/s item/s
    * @param {string} state
    */
-  async createOne(ticket, state) {
+  async createOne(ticket) {
     try {
-      return this.upsert(
-        merge({ items: ticket.items }, ticket.payment, {
-          state,
-          id: uuidv1(),
-          created_at: new Date().getTime(),
-        })
-      );
+      return this.upsert({ id: uuidv1(), created_at: new Date().getTime(), ...ticket });
     } catch (e) {
       throw new Error('createOne function');
     }
+  }
+
+  async upsert(ticket) {
+    return this.collection.atomicUpsert(ticket);
+  }
+
+  validateTicket(ticket) {
+    if (isEmpty(ticket.items)) return 'Ticket items cannot be empty';
+    return false;
   }
 }
 

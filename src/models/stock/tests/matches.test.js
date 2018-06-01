@@ -6,7 +6,7 @@ import Stock, { Stock as StockModel } from 'models/stock';
 import { NoStockMatchesFoundError, NoStockCreatedError } from 'errors/stock';
 import { getStockInstance, isErrorInstanceOf } from './common';
 
-describe.only('Stock matches method', function() {
+describe('Stock matches method', function () {
   let stockInstance;
   beforeEach(async () => {
     stockInstance = await getStockInstance();

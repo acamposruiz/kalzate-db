@@ -5,7 +5,7 @@ import { NoStockCreatedError } from 'errors/stock';
 import { getStockInstance, isErrorInstanceOf } from './common';
 import { expect } from 'chai';
 
-describe.only('create stock method', function() {
+describe('create stock method', function () {
   let stockInstance;
   beforeAll(async () => {
     stockInstance = await getStockInstance();
@@ -131,7 +131,7 @@ describe.only('create stock method', function() {
     expect(case3.result).to.be.true;
   });
 
-  it('should create an item using a reference and a price', async function() {
+  it('should create an item using a reference and a price', async function () {
     const case1 = await isErrorInstanceOf(
       async () =>
         await stockInstance.create({

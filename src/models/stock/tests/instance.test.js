@@ -6,7 +6,7 @@ import Stock, { Stock as StockModel } from 'models/stock';
 import { NoDatabaseFoundError } from 'errors/db';
 import { getStockInstance, isErrorInstanceOf } from './common';
 
-describe.only('Stock instance', function() {
+describe('Stock instance', function () {
   it('should throw error if no rx database is given', async () => {
     //@todo waiting for https://github.com/chaijs/chai/issues/930
     //expect(e).to.be.an.error(NoDatabaseFoundError);

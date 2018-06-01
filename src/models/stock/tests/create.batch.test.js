@@ -5,7 +5,7 @@ import { NoStockCreatedError } from 'errors/stock';
 import { getStockInstance, isErrorInstanceOf } from './common';
 import { expect } from 'chai';
 
-describe.only('create batch stock method', function() {
+describe('create batch stock method', function () {
   let stockInstance;
   beforeEach(async () => {
     stockInstance = await getStockInstance();

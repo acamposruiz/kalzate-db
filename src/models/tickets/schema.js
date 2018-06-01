@@ -1,7 +1,7 @@
 export default {
   title: 'tickets schema',
   version: 0,
-  description: 'describes the tickets',
+  description: 'describes a ticket document',
   type: 'object',
   properties: {
     created_at: {
@@ -18,6 +18,7 @@ export default {
     },
     items: {
       type: 'array',
+
     },
     // total: {
     //   type: 'number',
@@ -50,4 +51,5 @@ export default {
       type: 'string',
     },
   },
+  required: ['items', 'id', 'totalAmount', 'givenAmount', 'returnAmount', 'method'],
 };

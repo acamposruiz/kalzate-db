@@ -5,7 +5,7 @@ import { NoStockCreatedError, NoStockUpdatedError } from 'errors/stock';
 import { getStockInstance, isErrorInstanceOf } from './common';
 import { expect } from 'chai';
 
-describe.only('update stock method', function() {
+describe('update stock method', function () {
   let stockInstance;
   beforeAll(async () => {
     stockInstance = await getStockInstance();

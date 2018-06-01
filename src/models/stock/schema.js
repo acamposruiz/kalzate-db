@@ -1,7 +1,7 @@
 export default {
-  title: 'item schema',
+  title: 'stock schema',
   version: 0,
-  description: 'describes an item',
+  description: 'describes an stock document',
   type: 'object',
   properties: {
     created_at: {
