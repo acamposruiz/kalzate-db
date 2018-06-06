@@ -123,6 +123,24 @@ class Tickets {
     return { items, total, limit, skip };
   }
 
+  /**
+   * @method matches
+   * This looks for a all tickets items maching the field and value given
+   * @param {string} field
+   * @param {string} value
+   */
+  async matches(field, value) {
+    try {
+      if (!value) return { value, items: [] };
+      const matches = await this.get({
+        match: { [field]: { $regex: new RegExp(`^${value}`) } },
+      });
+      return { value, items: matches.items.map((i) => i[field]) };
+    } catch (e) {
+      throw new TicketsNotFoundError(e, field, value);
+    }
+  }
+
   /** ***************************************************** */
   /*                  PRIVATE METHODS                      */
   /** ***************************************************** */
