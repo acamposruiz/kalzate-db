@@ -165,6 +165,8 @@ class Tickets {
 
   validateTicket(ticket) {
     if (isEmpty(ticket.items)) return 'Ticket items cannot be empty';
+    if (ticket.totalAmount <= 0) return 'Ticket total amount must be positive number';
+    if (ticket.givenAmount <= 0) return 'Ticket given amount by customer must be positive number';
     return false;
   }
 }
