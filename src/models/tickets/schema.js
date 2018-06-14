@@ -50,6 +50,9 @@ export default {
     method: {
       type: 'string',
     },
+    relatesTo: {
+      type: 'string',
+    },
   },
   required: ['items', 'id', 'totalAmount', 'givenAmount', 'returnAmount', 'method'],
 };
