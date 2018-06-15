@@ -11,7 +11,7 @@
 // Cat Children
 // All
 import { isRxCollection, isRxDatabase } from 'rxdb';
-import { isArray, merge, uniqBy } from 'lodash';
+import { isArray, merge, uniqBy, first } from 'lodash';
 import uuidv1 from 'uuid/v1';
 import schema from 'models/stock/schema';
 import { DEFAULT_LIMIT_AMOUNT } from 'models/stock/config';
@@ -67,17 +67,39 @@ export class Stock {
    */
   async update(stock = {}) {
     try {
-      if (!stock || !stock.id) {
-        throw new Error('Stock requires an id field to be updated');
-      }
-      // Remove find check to allow creating a new stock if it does not exist
-      const isStockCreated = await this.collection
-        .find({ id: { $eq: stock.id } })
-        .exec();
-      if (!isStockCreated.length) {
-        throw new Error('Stock to be updated does not exists');
-      }
+      await this.fetchById(stock);
+      // @todo Should we return this.upsert or await this.upsert ?
       return await this.upsert(stock);
+    } catch (e) {
+      throw new NoStockUpdatedError(e, stock);
+    }
+  }
+
+  /**
+   * @method increaseAmount
+   * This updates an stock item amount by increasing it. it has to exists and fit the schema
+   * @param {object} stock
+   */
+  async increaseAmount(stock = {}) {
+    try {
+      const currentStock = await this.fetchById(stock);
+      // @todo Should we return this.upsert or await this.upsert ?
+      return await this.upsert({ ...stock, amount: first(currentStock).amount + stock.amount });
+    } catch (e) {
+      throw new NoStockUpdatedError(e, stock);
+    }
+  }
+
+  /**
+   * @method decreaseAmount
+   * This updates an stock item amount by decreasing it. it has to exists and fit the schema
+   * @param {object} stock
+   */
+  async decreaseAmount(stock = {}) {
+    try {
+      const currentStock = await this.fetchById(stock);
+      // @todo Should we return this.upsert or await this.upsert ?
+      return await this.upsert({ ...stock, amount: first(currentStock).amount - stock.amount });
     } catch (e) {
       throw new NoStockUpdatedError(e, stock);
     }
@@ -224,6 +246,20 @@ export class Stock {
 
   async upsert(stock) {
     return this.collection.atomicUpsert(stock);
+  }
+
+  async fetchById(stock) {
+    if (!stock || !stock.id) {
+      throw new Error('Stock requires an id field to be updated');
+    }
+    // Remove find check to allow creating a new stock if it does not exist
+    const currentStock = await this.collection
+      .find({ id: { $eq: stock.id } })
+      .exec();
+    if (!currentStock.length) {
+      throw new Error('Stock to be updated does not exists');
+    }
+    return currentStock;
   }
 }
 

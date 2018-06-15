@@ -39,7 +39,7 @@ import {
   TicketNoSavedError,
   TicketsNotFoundError,
 } from 'errors/tickets';
-
+import Stock from 'models/stock';
 class Tickets {
   defaults = { limit: DEFAULT_LIMIT_AMOUNT, skip: 0 };
   queries = {
@@ -77,6 +77,25 @@ class Tickets {
       if (validationError) {
         throw new Error(validationError);
       }
+      return await this.createOne(ticket);
+    } catch (e) {
+      throw new TicketNoSavedError(e, ticket);
+    }
+  }
+
+  /**
+   * @method sell
+   * Saves a new ticket document
+   * @param {array|object} ticket/s item/s
+   */
+  async sell(ticket) {
+    try {
+      const validationError = this.validateTicket(ticket);
+      if (validationError) {
+        throw new Error(validationError);
+      }
+      const stock = await Stock(this.db, this.collection);
+      await Promise.all(ticket.items.map((stockItem) => stock.decreaseAmount(stockItem)));
       return await this.createOne(ticket);
     } catch (e) {
       throw new TicketNoSavedError(e, ticket);

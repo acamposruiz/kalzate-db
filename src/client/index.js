@@ -3,8 +3,8 @@ import Stock from 'models/stock';
 import Tickets from 'models/tickets';
 import Settings from 'models/settings';
 import PouchdbAdapterIdb from 'pouchdb-adapter-idb';
-import PouchdbAdapterWebSQL from 'pouchdb-adapter-websql';
-import PouchdbAdapterLocalstorage from 'pouchdb-adapter-localstorage';
+// import PouchdbAdapterWebSQL from 'pouchdb-adapter-websql';
+// import PouchdbAdapterLocalstorage from 'pouchdb-adapter-localstorage';
 
 RxDB.plugin(PouchdbAdapterIdb);
 // RxDB.plugin(PouchdbAdapterWebSQL);
