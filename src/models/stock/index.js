@@ -82,9 +82,9 @@ export class Stock {
    */
   async increaseAmount(stock = {}) {
     try {
-      const currentStock = await this.fetchById(stock);
+      const currentStock = first(await this.fetchById(stock));
       // @todo Should we return this.upsert or await this.upsert ?
-      return await this.upsert({ ...stock, amount: first(currentStock).amount + stock.amount });
+      return await this.upsert({ ...currentStock._data, amount: currentStock.amount + stock.amount });
     } catch (e) {
       throw new NoStockUpdatedError(e, stock);
     }
@@ -97,9 +97,9 @@ export class Stock {
    */
   async decreaseAmount(stock = {}) {
     try {
-      const currentStock = await this.fetchById(stock);
+      const currentStock = first(await this.fetchById(stock));
       // @todo Should we return this.upsert or await this.upsert ?
-      return await this.upsert({ ...stock, amount: first(currentStock).amount - stock.amount });
+      return await this.upsert({ ...currentStock._data, amount: currentStock.amount - stock.amount });
     } catch (e) {
       throw new NoStockUpdatedError(e, stock);
     }

@@ -33,7 +33,7 @@
 import { isRxCollection, isRxDatabase } from 'rxdb';
 import schema from 'models/tickets/schema';
 import uuidv1 from 'uuid/v1';
-import { isEmpty } from 'lodash';
+import { isEmpty, first } from 'lodash';
 import { DEFAULT_LIMIT_AMOUNT } from 'models/tickets/config';
 import {
   TicketNoSavedError,
@@ -97,6 +97,27 @@ class Tickets {
       const stock = await Stock(this.db, this.collection);
       await Promise.all(ticket.items.map((stockItem) => stock.decreaseAmount(stockItem)));
       return await this.createOne(ticket);
+    } catch (e) {
+      throw new TicketNoSavedError(e, ticket);
+    }
+  }
+
+  /**
+   * @method sellBack
+   * It returns an existing ticket document by creating a new one
+   * @param {array|object} ticket/s item/s
+   */
+  async sellBack(ticket) {
+    try {
+      const validationError = this.validateTicketSold(ticket);
+      if (validationError) {
+        throw new Error(validationError);
+      }
+      const stock = await Stock(this.db, this.collection);
+      await Promise.all(ticket.items.map((stockItem) => !stockItem.added ? stock.increaseAmount({ ...stockItem, amount: stockItem.amount_return }) : stock.decreaseAmount(stockItem)));
+      const newTicket = await this.createOne(ticket);
+      await this.updateBy({ created_at: { $eq: Number(ticket.relatesTo) } }, { relatesTo: String(newTicket.created_at) });
+      return newTicket;
     } catch (e) {
       throw new TicketNoSavedError(e, ticket);
     }
@@ -178,6 +199,24 @@ class Tickets {
     }
   }
 
+  /**
+   * @method updateBy
+   * Cretes a new ticket document in db
+   * @param {array|object} ticket/s item/s
+   * @param {string} state
+   */
+  async updateBy(criteria, data) {
+    try {
+      const ticketFound = first(await this.collection.find(criteria).exec());
+      if (!ticketFound) {
+        throw new TicketsNotFoundError(null, criteria, data);
+      }
+      return this.upsert({ ...ticketFound._data, ...data });
+    } catch (e) {
+      throw new Error('updateBy function');
+    }
+  }
+
   async upsert(ticket) {
     return this.collection.atomicUpsert(ticket);
   }
@@ -185,6 +224,11 @@ class Tickets {
   validateTicket(ticket) {
     if (isEmpty(ticket.items)) return 'Ticket items cannot be empty';
     if (ticket.totalAmount <= 0) return 'Ticket total amount must be positive number';
+    if (ticket.givenAmount <= 0) return 'Ticket given amount by customer must be positive number';
+    return false;
+  }
+  validateTicketSold(ticket) {
+    if (isEmpty(ticket.items)) return 'Ticket items cannot be empty';
     if (ticket.givenAmount <= 0) return 'Ticket given amount by customer must be positive number';
     return false;
   }
