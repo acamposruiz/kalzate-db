@@ -40,5 +40,10 @@ export default {
         type: 'string',
       },
     },
+    sold: {
+      type: 'number',
+      default: 0,
+      index: true,
+    },
   },
 };

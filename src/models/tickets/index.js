@@ -53,6 +53,20 @@ class Tickets {
       limit,
       skip,
     }),
+    weeklyTickets: (limit = Number.MAX_SAFE_INTEGER, skip) => {
+      const today = new Date();
+      today.setDate(today.getDate() - today.getDay());
+      return ({
+        match: {
+          created_at: {
+            $gte: today.setHours(0, 0, 0, 0),
+          },
+        },
+        sort: 'created_at',
+        limit,
+        skip,
+      });
+    },
   }
 
   constructor(db, collection) {

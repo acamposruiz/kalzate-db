@@ -90,5 +90,5 @@ export default {
       type: 'number',
       default: 0,
     },
-  }
+  },
 };

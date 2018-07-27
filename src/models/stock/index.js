@@ -20,6 +20,7 @@ import {
   NoStockCreatedError,
   NoStockUpdatedError,
   NoStockMatchesFoundError,
+  QueryStockError,
 } from 'errors/stock';
 export class Stock {
   //   static queries = {
@@ -32,6 +33,42 @@ export class Stock {
   //     ALL: {},
   //   };
   defaults = { limit: DEFAULT_LIMIT_AMOUNT, skip: 0 };
+  queries = {
+    fullStock: () => ({
+      limit: Number.MAX_SAFE_INTEGER,
+    }),
+    topSold: () => ({
+      match: { // MATCH DOES NOT WORK ALONG WITH SORT!!!
+        sold: {
+          $gte: 1,
+        },
+      },
+      limit: 10,
+      skip: 0,
+      sort: { sold: -1 },
+    }),
+    topNotSold: () => ({
+      match: { // MATCH DOES NOT WORK ALONG WITH SORT!!!
+        sold: {
+          $gte: 1,
+        },
+      },
+      limit: 10,
+      skip: 0,
+      sort: {
+        sold: 1,
+      },
+    }),
+    topEmptyStock: () => ({
+      match: {
+        amount: {
+          $eq: 0,
+        },
+      },
+      limit: 10,
+      skip: 0,
+    }),
+  };
 
   constructor(db, collection) {
     if (!isRxDatabase(db)) {
@@ -42,6 +79,19 @@ export class Stock {
     }
     this.db = db;
     this.collection = collection;
+  }
+
+  /**
+ * @method query
+ * Get the list of stock filtered by a given query
+ * @param {object} tickets query
+ */
+  async query(query) {
+    try {
+      return await this.get(query);
+    } catch (e) {
+      throw new QueryStockError(e, query);
+    }
   }
 
   /**
@@ -99,7 +149,7 @@ export class Stock {
     try {
       const currentStock = first(await this.fetchById(stock));
       // @todo Should we return this.upsert or await this.upsert ?
-      return await this.upsert({ ...currentStock._data, amount: currentStock.amount - stock.amount });
+      return await this.upsert({ ...currentStock._data, amount: currentStock.amount - stock.amount, sold: currentStock.sold - stock.amount });
     } catch (e) {
       throw new NoStockUpdatedError(e, stock);
     }
@@ -181,6 +231,16 @@ export class Stock {
   async dump(decrypt = true) {
     return this.collection.dump(decrypt);
   }
+
+  /**
+   * @method formatDescription
+   * Formats an stock item description from its brand, color, size and gender
+   * @param {object} item
+   * @return {string}
+   */
+  formatDescription(item) {
+    return `${this.abbrv('BRAND', item.brand)}-${item.colors.map((c) => this.abbrv('COLORS', c)).join()} (${item.size}-${this.abbrv('BRAND', item.gender)})`;
+  }
   // async query({ select, where, limit, offset, order }) {
   //   return this.collection.find()
   // }
@@ -229,7 +289,7 @@ export class Stock {
       .exec();
     if (!isStockCreated.length) {
       return this.upsert(
-        merge(stock, { id: uuidv1(), created_at: new Date().getTime() })
+        merge(stock, { id: uuidv1(), created_at: new Date().getTime(), sold: 0 })
       );
     }
     if (!orUpdate) {
@@ -260,6 +320,16 @@ export class Stock {
       throw new Error('Stock to be updated does not exists');
     }
     return currentStock;
+  }
+
+  abbrv(type, value) {
+    switch (type) {
+      case 'COLORS':
+      case 'GENDER':
+      case 'BRAND':
+        return value ? value.substring(0, 3) : '';
+      default: return value;
+    }
   }
 }
 

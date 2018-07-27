@@ -2,6 +2,7 @@ import * as RxDB from 'rxdb';
 import Stock from 'models/stock';
 import Tickets from 'models/tickets';
 import Settings from 'models/settings';
+import Charts from 'models/charts';
 import PouchdbAdapterIdb from 'pouchdb-adapter-idb';
 // import PouchdbAdapterWebSQL from 'pouchdb-adapter-websql';
 // import PouchdbAdapterLocalstorage from 'pouchdb-adapter-localstorage';
@@ -22,5 +23,6 @@ export default async function (dbOptions) {
   const stock = await Stock(db);
   const tickets = await Tickets(db);
   const settings = await Settings(db);
-  return { stock, tickets, settings };
+  const charts = await Charts(db);
+  return { stock, tickets, settings, charts };
 }
