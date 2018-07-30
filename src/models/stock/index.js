@@ -149,7 +149,7 @@ export class Stock {
     try {
       const currentStock = first(await this.fetchById(stock));
       // @todo Should we return this.upsert or await this.upsert ?
-      return await this.upsert({ ...currentStock._data, amount: currentStock.amount - stock.amount, sold: currentStock.sold - stock.amount });
+      return await this.upsert({ ...currentStock._data, amount: currentStock.amount - stock.amount, sold: currentStock.sold + stock.amount });
     } catch (e) {
       throw new NoStockUpdatedError(e, stock);
     }

@@ -9,6 +9,8 @@ import Stock from 'models/stock';
 import Ticket from 'models/tickets';
 
 class Charts {
+  TOP_TEN_LIMIT = 10;
+
   constructor(db, stock, ticket) {
     if (!isRxDatabase(db)) {
       throw new Error('A valid RxDatabase is required!');
@@ -20,6 +22,7 @@ class Charts {
     this.stock = stock;
     this.ticket = ticket;
   }
+
   /**
    * @method init
    * return latest charts data
@@ -168,9 +171,13 @@ class Charts {
      */
   async alertData() {
     try {
-      const { items: topSoldStockItems } = await this.stock.query(this.stock.queries.topSold());
-      const { items: topNotSoldStockItems } = await this.stock.query(this.stock.queries.topNotSold());
+      // const { items: topSoldStockItems } = await this.stock.query(this.stock.queries.topSold());
+      const topSoldStockItems = await this.stock.collection.find().where('sold').gt(0).limit(this.TOP_TEN_LIMIT).sort('-sold').exec();
+      // const { items: topNotSoldStockItems } = await this.stock.query(this.stock.queries.topNotSold());
+      const topNotSoldStockItems = await this.stock.collection.find().where('sold').gt(0).limit(this.TOP_TEN_LIMIT).sort('sold').exec();
       const { items: topEmptyStockItems } = await this.stock.query(this.stock.queries.topEmptyStock());
+
+      console.log(topSoldStockItems, topNotSoldStockItems, topEmptyStockItems);
       if (!size(topSoldStockItems) && !size(topNotSoldStockItems) && !size(topEmptyStockItems)) return [];
       return zipWith(topSoldStockItems, topNotSoldStockItems, topEmptyStockItems, (soldItem = '', notSoldItem = '', emptyStockItem = '') => ({ sold: soldItem ? this.stock.formatDescription(soldItem) : '', notSold: notSoldItem ? this.stock.formatDescription(notSoldItem) : '', emptyStock: emptyStockItem ? this.stock.formatDescription(emptyStockItem) : '' }));
     } catch (e) {
