@@ -198,10 +198,10 @@ class Charts {
   }
 }
 
-export default async function (db) {
+export default async function (db, stockInstance, ticketInstance) {
   // Create or Retrieve collection first
-  const stockInstance = await Stock(db, db.collections.stock);
-  const ticketInstance = await Ticket(db, db.collections.ticket);
+  // const stockInstance = await Stock(db, schema);
+  // const ticketInstance = await Ticket(db, schema);
 
   // Return an Tickets instance
   return new Charts(db, stockInstance, ticketInstance);

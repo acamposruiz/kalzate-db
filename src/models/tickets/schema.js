@@ -53,6 +53,9 @@ export default {
     relatesTo: {
       type: 'string',
     },
+    printed: {
+      type: 'string',
+    },
   },
   required: ['items', 'id', 'totalAmount', 'givenAmount', 'returnAmount', 'method'],
 };

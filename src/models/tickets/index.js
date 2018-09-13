@@ -39,7 +39,7 @@ import {
   TicketNoSavedError,
   TicketsNotFoundError,
 } from 'errors/tickets';
-import Stock from 'models/stock';
+
 class Tickets {
   defaults = { limit: DEFAULT_LIMIT_AMOUNT, skip: 0 };
   queries = {
@@ -67,9 +67,9 @@ class Tickets {
         skip,
       });
     },
-  }
+  };
 
-  constructor(db, collection) {
+  constructor(db, collection, stock) {
     if (!isRxDatabase(db)) {
       throw new Error('A valid RxDatabase is required!');
     }
@@ -78,6 +78,7 @@ class Tickets {
     }
     this.db = db;
     this.collection = collection;
+    this.stock = stock;
   }
 
   /**
@@ -108,8 +109,7 @@ class Tickets {
       if (validationError) {
         throw new Error(validationError);
       }
-      const stock = await Stock(this.db, this.collection);
-      await Promise.all(ticket.items.map((stockItem) => stock.decreaseAmount(stockItem)));
+      await Promise.all(ticket.items.map((stockItem) => this.stock.decreaseAmount(stockItem)));
       return await this.createOne(ticket);
     } catch (e) {
       throw new TicketNoSavedError(e, ticket);
@@ -127,8 +127,7 @@ class Tickets {
       if (validationError) {
         throw new Error(validationError);
       }
-      const stock = await Stock(this.db, this.collection);
-      await Promise.all(ticket.items.map((stockItem) => !stockItem.added ? stock.increaseAmount({ ...stockItem, amount: stockItem.amount_return }) : stock.decreaseAmount(stockItem)));
+      await Promise.all(ticket.items.map((stockItem) => !stockItem.added ? this.stock.increaseAmount({ ...stockItem, amount: stockItem.amount_return }) : this.stock.decreaseAmount(stockItem)));
       const newTicket = await this.createOne(ticket);
       await this.updateBy({ created_at: { $eq: Number(ticket.relatesTo) } }, { relatesTo: String(newTicket.created_at) });
       return newTicket;
@@ -248,7 +247,7 @@ class Tickets {
   }
 }
 
-export default async function (db) {
+export default async function (db, stockInstance) {
   // Create or Retrieve collection first
   const collection = db.collections.tickets ? db.collections.tickets :
     await db.collection({
@@ -256,6 +255,6 @@ export default async function (db) {
       schema,
     });
   // Return an Tickets instance
-  return new Tickets(db, collection);
+  return new Tickets(db, collection, stockInstance);
 }
 
