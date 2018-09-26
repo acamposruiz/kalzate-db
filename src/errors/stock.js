@@ -47,3 +47,19 @@ export class NoStockMatchesFoundError extends Error {
     }`;
   }
 }
+
+/**
+ * @class QueryStockError
+ * @desc throws when no matches are found
+ */
+export class QueryStockError extends Error {
+  constructor(e = { message: '' }, query = '') {
+    super(e);
+    this.title = 'Stock query could not be executed';
+    this.code = 'QueryStockError';
+    this.data = { query, e };
+    this.message = `Stock Query did not run.Please, check extra info: 
+    ${JSON.stringify(query)}
+    Error: ${e.message}`;
+  }
+}

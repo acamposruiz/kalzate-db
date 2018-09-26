@@ -13,7 +13,7 @@
 import { isRxCollection, isRxDatabase } from 'rxdb';
 import { isArray, merge, uniqBy, first } from 'lodash';
 import uuidv1 from 'uuid/v1';
-import schema from 'models/stock/schema';
+import schema from 'models/stock_basic/schema';
 import { DEFAULT_LIMIT_AMOUNT } from 'models/stock/config';
 import { NoDatabaseFoundError } from 'errors/db';
 import {
@@ -22,7 +22,8 @@ import {
   NoStockMatchesFoundError,
   QueryStockError,
 } from 'errors/stock';
-export class Stock {
+
+export class StockBasic {
   //   static queries = {
   //     MORE_SOLD: { order: 'times_sold', desc: true },
   //     MORE_EXPENSIVE: {},
@@ -70,7 +71,7 @@ export class Stock {
     }),
   };
 
-  constructor(db, collection) {
+  constructor(db, collection, schema) {
     if (!isRxDatabase(db)) {
       throw new Error('A valid RxDatabase is required!');
     }
@@ -79,6 +80,7 @@ export class Stock {
     }
     this.db = db;
     this.collection = collection;
+    this.schema = schema;
   }
 
   /**
@@ -239,7 +241,7 @@ export class Stock {
    * @return {string}
    */
   formatDescription(item) {
-    return `${this.abbrv('BRAND', item.brand)}-${item.colors.map((c) => this.abbrv('COLORS', c)).join()} (${item.size}-${this.abbrv('BRAND', item.gender)})`;
+    return `${this.abbrv('DESC', item.desc)}`;
   }
   // async query({ select, where, limit, offset, order }) {
   //   return this.collection.find()
@@ -324,10 +326,8 @@ export class Stock {
 
   abbrv(type, value) {
     switch (type) {
-      case 'COLORS':
-      case 'GENDER':
-      case 'BRAND':
-        return value ? value.substring(0, 3) : '';
+      case 'DESC':
+        return value ? value.substring(0, 10) : '';
       default: return value;
     }
   }
@@ -339,9 +339,25 @@ export default async function (db) {
   const collection = db.collections.stock
     ? db.collections.stock
     : await db.collection({
-      name: 'stock',
+      name: 'stockbasic',
       schema,
+      // https://github.com/pubkey/rxdb/blob/master/docs-src/data-migration.md
+      // migrationStrategies: {
+      //   // 1 means, this transforms data from version 0 to version 1
+      //   1: function(oldDoc){
+      //     oldDoc.time = new Date(oldDoc.time).getTime(); // string to unix
+      //     return oldDoc;
+      //   },
+      //   /**
+      //    * this removes all documents older then 2017-02-12
+      //    * they will not appear in the new collection
+      //    */
+      //   2: function(oldDoc){
+      //     if(oldDoc.time < 1486940585) return null;
+      //     else return oldDoc;
+      //   }
+      // }
     });
   // Return an Stock instance
-  return new Stock(db, collection);
+  return new StockBasic(db, collection);
 }

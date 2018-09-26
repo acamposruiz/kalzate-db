@@ -1,36 +1,61 @@
 export default {
   title: 'tickets schema',
   version: 0,
-  description: 'describes the tickets',
+  description: 'describes a ticket document',
   type: 'object',
   properties: {
+    created_at: {
+      type: 'number',
+      index: true,
+    },
     id: {
       type: 'string',
-      "primary": true
+      primary: true,
+      final: true,
     },
-    status: {
+    state: {
       type: 'string',
     },
     items: {
       type: 'array',
+
     },
-    total: {
+    // total: {
+    //   type: 'number',
+    // },
+    // totalIn: {
+    //   type: 'number',
+    // },
+    // totalOut: {
+    //   type: 'number',
+    // },
+    totalAmount: {
+      type: 'string',
+    },
+    givenAmount: {
+      type: 'string',
+    },
+    returnAmount: {
+      type: 'string',
+    },
+    discount: {
       type: 'number',
     },
-    total_in: {
-      type: 'number',
-    },
-    total_out: {
+    tax: {
       type: 'number',
     },
     currency: {
       type: 'string',
     },
-    paymentMethod: {
+    method: {
       type: 'string',
     },
-    date: {
+    relatesTo: {
       type: 'string',
-    }
-  }
+    },
+    printed: {
+      type: 'string',
+    },
+  },
+  required: ['items', 'id', 'totalAmount', 'givenAmount', 'returnAmount', 'method'],
 };

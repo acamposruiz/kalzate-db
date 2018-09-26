@@ -21,24 +21,14 @@ export default {
     brand: {
       type: 'string',
     },
-    size: {
-      type: 'number',
-    },
     price: {
       type: 'number',
     },
     amount: {
       type: 'number',
     },
-    gender: {
+    desc: {
       type: 'string',
-    },
-    colors: {
-      type: 'array',
-      uniqueItems: true,
-      item: {
-        type: 'string',
-      },
     },
     sold: {
       type: 'number',
